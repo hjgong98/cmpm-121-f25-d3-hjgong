@@ -26,7 +26,7 @@ Key gameplay challenge: Can players collect and craft tokens from nearby locatio
 - [x] use `luck()` to spawn tokens (1 or 2) in cells — consistent across reloads
 - [x] show token values visibly on cells (no popup needed)
 - [x] track player’s held token (only one allowed)
-- [ ] allow click to: pick up token or merge matching ones
+- [x] allow click to: pick up token or merge matching ones
 - [ ] only allow interaction within 3 cells of player
 - [ ] show held token on screen (HUD)
 - [ ] win when player creates 16 (alert "You win!")

@@ -56,7 +56,8 @@ function gridToLatLngBounds(i: number, j: number) {
 
 // game state
 const cellContents = new Map<string, number>();
-const heldToken: number | null = null;
+let heldToken: number | null = null;
+const playerPos = { i: 0, j: 0 };
 
 // players held token (HUD)
 const hud = document.createElement("div");
@@ -77,7 +78,36 @@ document.body.appendChild(hud);
 function updateHud() {
   hud.textContent = heldToken ? `Holding: ${heldToken}` : "Holding: —";
 }
-updateHud(); // initial state
+updateHud();
+
+// store markers allow to refresh
+const cellMarkers = new Map<string, leaflet.Marker>();
+
+function refreshCell(i: number, j: number) {
+  const key = `${i},${j}`;
+  const bounds = gridToLatLngBounds(i, j);
+  const value = cellContents.get(key);
+
+  // remove old marker if exists
+  const existingMarker = cellMarkers.get(key);
+  if (existingMarker) map.removeLayer(existingMarker);
+
+  const icon = leaflet.divIcon({
+    html: `<span style="
+      font: 12px monospace;
+      color: ${value !== undefined ? "white" : "#666"};
+      font-weight: ${value !== undefined ? "bold" : "normal"};
+      background: ${value !== undefined ? "#f44336" : "transparent"};
+      padding: ${value !== undefined ? "2px 4px" : "0"};
+      border-radius: 4px;
+    ">${value ?? `${i},${j}`}</span>`,
+    className: "cell-label",
+    iconSize: [30, 20],
+  });
+
+  const marker = leaflet.marker(bounds.getCenter(), { icon }).addTo(map);
+  cellMarkers.set(key, marker);
+}
 
 // draw a grid
 for (let i = -GRID_SIZE; i <= GRID_SIZE; i++) {
@@ -85,7 +115,7 @@ for (let i = -GRID_SIZE; i <= GRID_SIZE; i++) {
     const bounds = gridToLatLngBounds(i, j);
     const key = `${i},${j}`;
 
-    // Use luck() to decide if this cell has a token
+    // use luck() to decide if this cell has a token
     const spawnRoll = luck(key);
     if (spawnRoll < 0.5) {
       const valueRoll = luck(key + "value");
@@ -93,29 +123,49 @@ for (let i = -GRID_SIZE; i <= GRID_SIZE; i++) {
       cellContents.set(key, value);
     }
 
-    // Draw rectangle
-    leaflet.rectangle(bounds, {
+    // draw rectangle
+    const rect = leaflet.rectangle(bounds, {
       color: "#555",
       weight: 1,
       fillColor: "#ffeb3b",
       fillOpacity: 0.1,
     }).addTo(map);
 
-    // Show token value if present, otherwise show (i,j)
-    const hasToken = cellContents.has(key);
-    leaflet.marker(bounds.getCenter(), {
-      icon: leaflet.divIcon({
-        html: `<span style="
-          font: 12px monospace; 
-          color: ${hasToken ? "white" : "#666"};
-          font-weight: ${hasToken ? "bold" : "normal"};
-          background: ${hasToken ? "#f44336" : "transparent"};
-          padding: ${hasToken ? "2px 4px" : "0"};
-          border-radius: 4px;
-        ">${hasToken ? cellContents.get(key) : `${i},${j}`}</span>`,
-        className: "cell-label",
-        iconSize: [30, 20],
-      }),
-    }).addTo(map);
+    // initialize label
+    refreshCell(i, j);
+
+    // click handler
+    rect.on("click", () => {
+      const distI = Math.abs(i - playerPos.i);
+      const distJ = Math.abs(j - playerPos.j);
+      if (distI > 3 || distJ > 3) {
+        alert("Too far! Must be within 3 cells. 🚶‍♂️❌");
+        return;
+      }
+
+      const value = cellContents.get(key);
+
+      if (heldToken === null) {
+        // pick up token
+        if (value !== undefined) {
+          heldToken = value;
+          cellContents.delete(key);
+          updateHud();
+          refreshCell(i, j);
+        }
+      } else {
+        // try to merge
+        if (value !== undefined && value === heldToken) {
+          const newValue = value * 2;
+          cellContents.set(key, newValue);
+          heldToken = null;
+          updateHud();
+          refreshCell(i, j);
+          if (newValue === 16) {
+            alert("You win! Highest bit collected!");
+          }
+        }
+      }
+    });
   }
 }
