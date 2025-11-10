@@ -27,6 +27,10 @@ Key gameplay challenge: Can players collect and craft tokens from nearby locatio
 - [x] show token values visibly on cells (no popup needed)
 - [x] track player’s held token (only one allowed)
 - [x] allow click to: pick up token or merge matching ones
-- [ ] only allow interaction within 3 cells of player
-- [ ] show held token on screen (HUD)
-- [ ] win when player creates 16 (alert "You win!")
+- [x] only allow interaction within 3 cells of player
+- [x] show held token on screen (HUD)
+- [x] (added step) if held tokens = null and cell = 1, pick up tokens in cell (held = 1)
+      if held tokens = tokens in cell, pick up token and merge into held (1 + 1 = 2)
+      if held tokens > tokens in cell, exchange tokens with cell (hels = 1, cell = 2)
+- [ ] fix the clicking hitbox
+- [x] win when player creates 16 (alert "You win!")

@@ -143,27 +143,34 @@ for (let i = -GRID_SIZE; i <= GRID_SIZE; i++) {
         return;
       }
 
-      const value = cellContents.get(key);
+      const cellValue = cellContents.get(key);
 
       if (heldToken === null) {
-        // pick up token
-        if (value !== undefined) {
-          heldToken = value;
+        // Pick up if empty-handed
+        if (cellValue !== undefined) {
+          heldToken = cellValue;
           cellContents.delete(key);
           updateHud();
           refreshCell(i, j);
         }
-      } else {
-        // try to merge
-        if (value !== undefined && value === heldToken) {
-          const newValue = value * 2;
-          cellContents.set(key, newValue);
-          heldToken = null;
+      } else if (cellValue !== undefined) {
+        // Either merge or swap
+        if (heldToken === cellValue) {
+          // MERGE: 2+2 → 4 (you hold the 4)
+          const newValue = heldToken * 2;
+          heldToken = newValue;
+          cellContents.delete(key);
           updateHud();
           refreshCell(i, j);
           if (newValue === 16) {
-            alert("You win! Highest bit collected!");
+            alert("You win!");
           }
+        } else {
+          // SWAP: trade tokens
+          cellContents.set(key, heldToken); // put your token in cell
+          heldToken = cellValue; // take theirs
+          updateHud();
+          refreshCell(i, j); // update label
         }
       }
     });
