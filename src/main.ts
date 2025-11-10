@@ -5,6 +5,7 @@ import leaflet from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "./style.css";
 import "./_leafletWorkaround.ts";
+import luck from "./_luck.ts";
 
 // Set up the map
 const mapDiv = document.createElement("div");
@@ -53,12 +54,24 @@ function gridToLatLngBounds(i: number, j: number) {
   ]);
 }
 
+// game state
+const cellContents = new Map<string, number>();
+
 // draw a grid
 for (let i = -GRID_SIZE; i <= GRID_SIZE; i++) {
   for (let j = -GRID_SIZE; j <= GRID_SIZE; j++) {
     const bounds = gridToLatLngBounds(i, j);
+    const key = `${i},${j}`;
 
-    // Create a rectangle for each cell
+    // Use luck() to decide if this cell has a token
+    const spawnRoll = luck(key);
+    if (spawnRoll < 0.5) {
+      const valueRoll = luck(key + "value");
+      const value = valueRoll < 0.7 ? 1 : 2;
+      cellContents.set(key, value);
+    }
+
+    // Draw rectangle
     leaflet.rectangle(bounds, {
       color: "#555",
       weight: 1,
@@ -66,11 +79,19 @@ for (let i = -GRID_SIZE; i <= GRID_SIZE; i++) {
       fillOpacity: 0.1,
     }).addTo(map);
 
+    // Show token value if present, otherwise show (i,j)
+    const hasToken = cellContents.has(key);
     leaflet.marker(bounds.getCenter(), {
       icon: leaflet.divIcon({
-        html:
-          `<span style="font: 10px monospace; color: #666;">${i},${j}</span>`,
-        className: "grid-label",
+        html: `<span style="
+          font: 12px monospace; 
+          color: ${hasToken ? "white" : "#666"};
+          font-weight: ${hasToken ? "bold" : "normal"};
+          background: ${hasToken ? "#f44336" : "transparent"};
+          padding: ${hasToken ? "2px 4px" : "0"};
+          border-radius: 4px;
+        ">${hasToken ? cellContents.get(key) : `${i},${j}`}</span>`,
+        className: "cell-label",
         iconSize: [30, 20],
       }),
     }).addTo(map);
