@@ -21,7 +21,7 @@ Key gameplay challenge: Can players collect and craft tokens from nearby locatio
 
 - [x] copy main.ts → reference.ts
 - [x] clear main.ts
-- [ ] create Leaflet map, center on classroom, lock zoom
+- [x] create Leaflet map, center on classroom, lock zoom
 - [ ] draw grid (10×10) using rectangles (0.0001° per cell)
 - [ ] use `luck()` to spawn tokens (1 or 2) in cells — consistent across reloads
 - [ ] show token values visibly on cells (no popup needed)
@@ -30,9 +30,3 @@ Key gameplay challenge: Can players collect and craft tokens from nearby locatio
 - [ ] only allow interaction within 3 cells of player
 - [ ] show held token on screen (HUD)
 - [ ] win when player creates 16 (alert "You win!")
-
-## D3.b: ...
-
-...
-
-### 
