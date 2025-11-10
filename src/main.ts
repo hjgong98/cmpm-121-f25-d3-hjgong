@@ -56,6 +56,28 @@ function gridToLatLngBounds(i: number, j: number) {
 
 // game state
 const cellContents = new Map<string, number>();
+const heldToken: number | null = null;
+
+// players held token (HUD)
+const hud = document.createElement("div");
+hud.id = "hud";
+hud.style.position = "fixed";
+hud.style.bottom = "20px";
+hud.style.left = "20px";
+hud.style.background = "black";
+hud.style.color = "white";
+hud.style.padding = "12px 16px";
+hud.style.borderRadius = "8px";
+hud.style.font = "bold 14px sans-serif";
+hud.style.zIndex = "1000";
+hud.style.boxShadow = "0 0 10px rgba(0,0,0,0.5)";
+document.body.appendChild(hud);
+
+// update HUD display
+function updateHud() {
+  hud.textContent = heldToken ? `Holding: ${heldToken}` : "Holding: —";
+}
+updateHud(); // initial state
 
 // draw a grid
 for (let i = -GRID_SIZE; i <= GRID_SIZE; i++) {
