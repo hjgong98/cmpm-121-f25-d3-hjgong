@@ -32,5 +32,5 @@ Key gameplay challenge: Can players collect and craft tokens from nearby locatio
 - [x] (added step) if held tokens = null and cell = 1, pick up tokens in cell (held = 1)
       if held tokens = tokens in cell, pick up token and merge into held (1 + 1 = 2)
       if held tokens > tokens in cell, exchange tokens with cell (hels = 1, cell = 2)
-- [ ] fix the clicking hitbox
+- [x] fix the clicking hitbox
 - [x] win when player creates 16 (alert "You win!")

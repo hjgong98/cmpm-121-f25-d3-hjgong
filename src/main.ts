@@ -129,6 +129,7 @@ for (let i = -GRID_SIZE; i <= GRID_SIZE; i++) {
       weight: 1,
       fillColor: "#ffeb3b",
       fillOpacity: 0.1,
+      interactive: true,
     }).addTo(map);
 
     // initialize label
@@ -136,12 +137,18 @@ for (let i = -GRID_SIZE; i <= GRID_SIZE; i++) {
 
     // click handler
     rect.on("click", () => {
+      // debug
+      console.log("Clicked cell:", i, j);
+
       const distI = Math.abs(i - playerPos.i);
       const distJ = Math.abs(j - playerPos.j);
       if (distI > 3 || distJ > 3) {
         alert("Too far! Must be within 3 cells. 🚶‍♂️❌");
         return;
       }
+
+      playerPos.i = i;
+      playerPos.j = j;
 
       const cellValue = cellContents.get(key);
 
