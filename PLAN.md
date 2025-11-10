@@ -22,7 +22,7 @@ Key gameplay challenge: Can players collect and craft tokens from nearby locatio
 - [x] copy main.ts → reference.ts
 - [x] clear main.ts
 - [x] create Leaflet map, center on classroom, lock zoom
-- [ ] draw grid (10×10) using rectangles (0.0001° per cell)
+- [x] draw grid (10×10) using rectangles (0.0001° per cell)
 - [ ] use `luck()` to spawn tokens (1 or 2) in cells — consistent across reloads
 - [ ] show token values visibly on cells (no popup needed)
 - [ ] track player’s held token (only one allowed)

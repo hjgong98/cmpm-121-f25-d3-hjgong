@@ -37,3 +37,42 @@ leaflet.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
   attribution: "© OpenStreetMap",
 }).addTo(map);
+
+// grid config
+const TILE_DEGREES = 1e-4;
+const GRID_SIZE = 5;
+
+function gridToLatLngBounds(i: number, j: number) {
+  const north = CLASSROOM_LATLNG.lat + i * TILE_DEGREES;
+  const south = north + TILE_DEGREES;
+  const west = CLASSROOM_LATLNG.lng + j * TILE_DEGREES;
+  const east = west + TILE_DEGREES;
+  return leaflet.latLngBounds([
+    [north, west],
+    [south, east],
+  ]);
+}
+
+// draw a grid
+for (let i = -GRID_SIZE; i <= GRID_SIZE; i++) {
+  for (let j = -GRID_SIZE; j <= GRID_SIZE; j++) {
+    const bounds = gridToLatLngBounds(i, j);
+
+    // Create a rectangle for each cell
+    leaflet.rectangle(bounds, {
+      color: "#555",
+      weight: 1,
+      fillColor: "#ffeb3b",
+      fillOpacity: 0.1,
+    }).addTo(map);
+
+    leaflet.marker(bounds.getCenter(), {
+      icon: leaflet.divIcon({
+        html:
+          `<span style="font: 10px monospace; color: #666;">${i},${j}</span>`,
+        className: "grid-label",
+        iconSize: [30, 20],
+      }),
+    }).addTo(map);
+  }
+}
