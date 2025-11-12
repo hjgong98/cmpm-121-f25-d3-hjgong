@@ -44,9 +44,11 @@ const TILE_DEGREES = 1e-4;
 const GRID_SIZE = 5;
 
 function gridToLatLngBounds(i: number, j: number) {
-  const north = CLASSROOM_LATLNG.lat + i * TILE_DEGREES;
+  const originLat = 0;
+  const originLng = 0;
+  const north = originLat + i * TILE_DEGREES;
   const south = north + TILE_DEGREES;
-  const west = CLASSROOM_LATLNG.lng + j * TILE_DEGREES;
+  const west = originLng + j * TILE_DEGREES;
   const east = west + TILE_DEGREES;
   return leaflet.latLngBounds([
     [north, west],

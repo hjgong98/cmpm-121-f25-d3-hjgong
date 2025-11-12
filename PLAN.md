@@ -43,7 +43,7 @@ Key gameplay challenge: Can players craft an even higher value token by moving t
 
 ### D3.b Steps
 
-- [] Change grid origin from classroom to Null Island (0, 0)
+- [x] Change grid origin from classroom to Null Island (0, 0)
 - [] Add 4 buttons (N/S/E/W) on screen to move the player by one grid cell
 - [] Player position is tracked as (i, j) — clicking a button updates it
 - [] Only cells near player can be clicked (within 3 cells)
