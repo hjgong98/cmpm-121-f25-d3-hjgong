@@ -44,11 +44,11 @@ Key gameplay challenge: Can players craft an even higher value token by moving t
 ### D3.b Steps
 
 - [x] Change grid origin from classroom to Null Island (0, 0)
-- [] Add 4 buttons (N/S/E/W) on screen to move the player by one grid cell
+- [x] Add 4 buttons (N/S/E/W) on screen to move the player by one grid cell
 - [] Player position is tracked as (i, j) — clicking a button updates it
 - [] Only cells near player can be clicked (within 3 cells)
-- [] 5. When map stops moving (`map.on('moveend', ...)`), re-draw all visible cells
-- [] 6. To do that:
+- [] When map stops moving (`map.on('moveend', ...)`), re-draw all visible cells
+  - To do that:
   - Use map bounds → figure out which `(i, j)` cells are visible
   - Clear old cells and re-run `refreshCell(i, j)` for all visible ones
 - [] Each time a cell is re-drawn, re-roll its token using `luck()`

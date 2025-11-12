@@ -78,6 +78,21 @@ function updateHud() {
 }
 updateHud();
 
+// Create directional buttons: N, W, E, S
+const buttonDiv = document.createElement("div");
+buttonDiv.innerHTML = `
+  <button id="btn-n" style="font-size:20px;width:40px;height:40px;">N</button><br>
+  <button id="btn-w" style="font-size:20px;width:40px;height:40px;">W</button>
+  <button id="btn-e" style="font-size:20px;width:40px;height:40px;">E</button><br>
+  <button id="btn-s" style="font-size:20px;width:40px;height:40px;">S</button>
+`;
+buttonDiv.style.position = "fixed";
+buttonDiv.style.top = "20px";
+buttonDiv.style.left = "20px";
+buttonDiv.style.zIndex = "1000";
+buttonDiv.style.textAlign = "center";
+document.body.appendChild(buttonDiv);
+
 // store markers allow to refresh
 const cellMarkers = new Map<string, leaflet.Marker>();
 
