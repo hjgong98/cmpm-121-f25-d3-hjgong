@@ -17,7 +17,7 @@ A location-based game that is a fusion of 2048 and Pokémon Go. Players collect 
 Key technical challenge: Can you assemble a map-based user interface using the Leaflet mapping framework?
 Key gameplay challenge: Can players collect and craft tokens from nearby locations to finally make one of sufficiently high value?
 
-### Steps
+### D3.a Steps
 
 - [x] copy main.ts → reference.ts
 - [x] clear main.ts
@@ -35,3 +35,22 @@ Key gameplay challenge: Can players collect and craft tokens from nearby locatio
 - [x] fix the clicking hitbox
 - [x] switched github pages to github actions this better actually push through successfully
 - [x] win when player creates 16 (alert "You win!")
+
+## D3.b: Globe-spanning gameplay
+
+Key technical challenge: Can you set up your implementation to support gameplay anywhere in the real world, not just locations near our classroom?
+Key gameplay challenge: Can players craft an even higher value token by moving to other locations to get access to additional crafting materials?
+
+### D3.b Steps
+
+- [] Change grid origin from classroom to Null Island (0, 0)
+- [] Add 4 buttons (N/S/E/W) on screen to move the player by one grid cell
+- [] Player position is tracked as (i, j) — clicking a button updates it
+- [] Only cells near player can be clicked (within 3 cells)
+- [] 5. When map stops moving (`map.on('moveend', ...)`), re-draw all visible cells
+- [] 6. To do that:
+  - Use map bounds → figure out which `(i, j)` cells are visible
+  - Clear old cells and re-run `refreshCell(i, j)` for all visible ones
+- [] Each time a cell is re-drawn, re-roll its token using `luck()`
+- [] Increase win goal from `16` → `256` (update message too)
+- [] Test: pan map far away → new cells appear, player can walk with buttons
