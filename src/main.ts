@@ -179,8 +179,8 @@ function redrawGrid() {
             cellContents.delete(key);
             updateHud();
             refreshCell(i, j);
-            if (newValue === 16) {
-              alert("You win! 🎉");
+            if (newValue === 256) {
+              alert("Congrats on getting 256 points! 🎉 You win! 🎉");
             }
           } else {
             cellContents.set(key, heldToken);
