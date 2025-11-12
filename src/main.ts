@@ -14,15 +14,11 @@ mapDiv.style.width = "100vw";
 mapDiv.style.height = "100vh";
 document.body.appendChild(mapDiv);
 
-// Fixed classroom location
-const CLASSROOM_LATLNG = leaflet.latLng(
-  36.997936938057016,
-  -122.05703507501151,
-);
+// Start map at Null Island (0, 0)
+const NULL_ISLAND = leaflet.latLng(0, 0);
 
-// Create the map
 const map = leaflet.map(mapDiv, {
-  center: CLASSROOM_LATLNG,
+  center: NULL_ISLAND,
   zoom: 19,
   minZoom: 19,
   maxZoom: 19,
