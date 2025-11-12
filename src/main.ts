@@ -198,7 +198,7 @@ function redrawGrid() {
 
 // Button event listeners
 document.getElementById("btn-n")!.addEventListener("click", () => {
-  playerPos.i--;
+  playerPos.i++;
   const center = gridToLatLngBounds(playerPos.i, playerPos.j).getCenter();
   map.panTo(center);
   redrawGrid();
@@ -206,7 +206,7 @@ document.getElementById("btn-n")!.addEventListener("click", () => {
 });
 
 document.getElementById("btn-s")!.addEventListener("click", () => {
-  playerPos.i++;
+  playerPos.i--;
   const center = gridToLatLngBounds(playerPos.i, playerPos.j).getCenter();
   map.panTo(center);
   redrawGrid();

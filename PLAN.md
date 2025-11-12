@@ -48,4 +48,5 @@ Key gameplay challenge: Can players craft an even higher value token by moving t
 - [x] Player position is tracked as (i, j) — clicking a button updates it
 - [x] When map stops moving, re-draw all visible cells (did not need moveend)
 - [x] Each time a cell is re-drawn, re-roll its token using `luck()`
+- [x] fixed the the bug where clicking the N button would make player go down and clicking S would make player go up
 - [] Increase win goal from `16` → `256` (update message too)
