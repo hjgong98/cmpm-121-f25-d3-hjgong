@@ -47,5 +47,5 @@ Key gameplay challenge: Can players craft an even higher value token by moving t
 - [x] Add 4 buttons (N/S/E/W) on screen to move the player by one grid cell
 - [x] Player position is tracked as (i, j) — clicking a button updates it
 - [x] When map stops moving, re-draw all visible cells (did not need moveend)
-- [] Each time a cell is re-drawn, re-roll its token using `luck()`
+- [x] Each time a cell is re-drawn, re-roll its token using `luck()`
 - [] Increase win goal from `16` → `256` (update message too)

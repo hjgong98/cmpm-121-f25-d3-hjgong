@@ -138,7 +138,6 @@ function redrawGrid() {
       const bounds = gridToLatLngBounds(i, j);
       const key = `${i},${j}`;
 
-      // Initialize cell content (if not already set)
       if (!cellContents.has(key)) {
         const spawnRoll = luck(key);
         if (spawnRoll < 0.5) {
@@ -146,6 +145,7 @@ function redrawGrid() {
           const value = valueRoll < 0.7 ? 1 : 2;
           cellContents.set(key, value);
         }
+        // 🌟 It's re-rolled here every time the grid is drawn and cell is empty!
       }
 
       const rect = leaflet.rectangle(bounds, {
