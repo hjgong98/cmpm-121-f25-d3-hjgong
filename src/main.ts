@@ -1,6 +1,5 @@
 // @deno-types="npm:@types/leaflet"
 import leaflet from "leaflet";
-
 // Styles
 import "leaflet/dist/leaflet.css";
 import "./style.css";
@@ -16,7 +15,6 @@ document.body.appendChild(mapDiv);
 
 // Start map at Null Island (0, 0)
 const NULL_ISLAND = leaflet.latLng(0, 0);
-
 const map = leaflet.map(mapDiv, {
   center: NULL_ISLAND,
   zoom: 19,
@@ -35,9 +33,12 @@ leaflet.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap",
 }).addTo(map);
 
-// grid config
+// Grid config
 const TILE_DEGREES = 1e-4;
 const GRID_SIZE = 5;
+
+// Layer group to manage grid cells
+const gridLayerGroup = leaflet.layerGroup().addTo(map);
 
 function gridToLatLngBounds(i: number, j: number) {
   const originLat = 0;
@@ -52,12 +53,12 @@ function gridToLatLngBounds(i: number, j: number) {
   ]);
 }
 
-// game state
+// Game state
 const cellContents = new Map<string, number>();
 let heldToken: number | null = null;
 const playerPos = { i: 0, j: 0 };
 
-// players held token (HUD)
+// Players held token (HUD)
 const hud = document.createElement("div");
 hud.id = "hud";
 hud.style.position = "fixed";
@@ -71,12 +72,6 @@ hud.style.font = "bold 14px sans-serif";
 hud.style.zIndex = "1000";
 hud.style.boxShadow = "0 0 10px rgba(0,0,0,0.5)";
 document.body.appendChild(hud);
-
-// update HUD display
-function updateHud() {
-  hud.textContent = heldToken ? `Holding: ${heldToken}` : "Holding: —";
-}
-updateHud();
 
 // Create directional buttons: N, W, E, S
 const buttonDiv = document.createElement("div");
@@ -93,7 +88,15 @@ buttonDiv.style.zIndex = "1000";
 buttonDiv.style.textAlign = "center";
 document.body.appendChild(buttonDiv);
 
-// store markers allow to refresh
+// Update HUD to show position too
+function updateHud() {
+  const pos = `(${playerPos.i}, ${playerPos.j})`;
+  hud.textContent = heldToken
+    ? `Holding: ${heldToken} | Pos: ${pos}`
+    : `Holding: — | Pos: ${pos}`;
+}
+
+// Store markers to refresh
 const cellMarkers = new Map<string, leaflet.Marker>();
 
 function refreshCell(i: number, j: number) {
@@ -101,7 +104,6 @@ function refreshCell(i: number, j: number) {
   const bounds = gridToLatLngBounds(i, j);
   const value = cellContents.get(key);
 
-  // remove old marker if exists
   const existingMarker = cellMarkers.get(key);
   if (existingMarker) map.removeLayer(existingMarker);
 
@@ -122,77 +124,111 @@ function refreshCell(i: number, j: number) {
   cellMarkers.set(key, marker);
 }
 
-// draw a grid
-for (let i = -GRID_SIZE; i <= GRID_SIZE; i++) {
-  for (let j = -GRID_SIZE; j <= GRID_SIZE; j++) {
-    const bounds = gridToLatLngBounds(i, j);
-    const key = `${i},${j}`;
+// Redraw the grid centered on player position
+function redrawGrid() {
+  gridLayerGroup.clearLayers();
+  cellMarkers.forEach((marker) => map.removeLayer(marker));
+  cellMarkers.clear();
 
-    // use luck() to decide if this cell has a token
-    const spawnRoll = luck(key);
-    if (spawnRoll < 0.5) {
-      const valueRoll = luck(key + "value");
-      const value = valueRoll < 0.7 ? 1 : 2;
-      cellContents.set(key, value);
-    }
+  const centerI = playerPos.i;
+  const centerJ = playerPos.j;
 
-    // draw rectangle
-    const rect = leaflet.rectangle(bounds, {
-      color: "#555",
-      weight: 1,
-      fillColor: "#ffeb3b",
-      fillOpacity: 0.1,
-      interactive: true,
-    }).addTo(map);
+  for (let i = centerI - GRID_SIZE; i <= centerI + GRID_SIZE; i++) {
+    for (let j = centerJ - GRID_SIZE; j <= centerJ + GRID_SIZE; j++) {
+      const bounds = gridToLatLngBounds(i, j);
+      const key = `${i},${j}`;
 
-    // initialize label
-    refreshCell(i, j);
-
-    // click handler
-    rect.on("click", () => {
-      // debug
-      console.log("Clicked cell:", i, j);
-
-      const distI = Math.abs(i - playerPos.i);
-      const distJ = Math.abs(j - playerPos.j);
-      if (distI > 3 || distJ > 3) {
-        alert("Too far! Must be within 3 cells. 🚶‍♂️❌");
-        return;
+      // Initialize cell content (if not already set)
+      if (!cellContents.has(key)) {
+        const spawnRoll = luck(key);
+        if (spawnRoll < 0.5) {
+          const valueRoll = luck(key + "value");
+          const value = valueRoll < 0.7 ? 1 : 2;
+          cellContents.set(key, value);
+        }
       }
 
-      playerPos.i = i;
-      playerPos.j = j;
+      const rect = leaflet.rectangle(bounds, {
+        color: "#555",
+        weight: 1,
+        fillColor: "#ffeb3b",
+        fillOpacity: 0.1,
+        interactive: true,
+      }).addTo(gridLayerGroup);
 
-      const cellValue = cellContents.get(key);
-
-      if (heldToken === null) {
-        // Pick up if empty-handed
-        if (cellValue !== undefined) {
-          heldToken = cellValue;
-          cellContents.delete(key);
-          updateHud();
-          refreshCell(i, j);
+      rect.on("click", () => {
+        const distI = Math.abs(i - playerPos.i);
+        const distJ = Math.abs(j - playerPos.j);
+        if (distI > 3 || distJ > 3) {
+          alert("Too far! Must be within 3 cells. 🚶‍♂️❌");
+          return;
         }
-      } else if (cellValue !== undefined) {
-        // Either merge or swap
-        if (heldToken === cellValue) {
-          // MERGE: 2+2 → 4 (you hold the 4)
-          const newValue = heldToken * 2;
-          heldToken = newValue;
-          cellContents.delete(key);
-          updateHud();
-          refreshCell(i, j);
-          if (newValue === 16) {
-            alert("You win!");
+
+        const cellValue = cellContents.get(key);
+        if (heldToken === null) {
+          if (cellValue !== undefined) {
+            heldToken = cellValue;
+            cellContents.delete(key);
+            updateHud();
+            refreshCell(i, j);
           }
-        } else {
-          // SWAP: trade tokens
-          cellContents.set(key, heldToken); // put your token in cell
-          heldToken = cellValue; // take theirs
-          updateHud();
-          refreshCell(i, j); // update label
+        } else if (cellValue !== undefined) {
+          if (heldToken === cellValue) {
+            const newValue = heldToken * 2;
+            heldToken = newValue;
+            cellContents.delete(key);
+            updateHud();
+            refreshCell(i, j);
+            if (newValue === 16) {
+              alert("You win! 🎉");
+            }
+          } else {
+            cellContents.set(key, heldToken);
+            heldToken = cellValue;
+            updateHud();
+            refreshCell(i, j);
+          }
         }
-      }
-    });
+      });
+
+      refreshCell(i, j);
+    }
   }
 }
+
+// Button event listeners
+document.getElementById("btn-n")!.addEventListener("click", () => {
+  playerPos.i--;
+  const center = gridToLatLngBounds(playerPos.i, playerPos.j).getCenter();
+  map.panTo(center);
+  redrawGrid();
+  updateHud();
+});
+
+document.getElementById("btn-s")!.addEventListener("click", () => {
+  playerPos.i++;
+  const center = gridToLatLngBounds(playerPos.i, playerPos.j).getCenter();
+  map.panTo(center);
+  redrawGrid();
+  updateHud();
+});
+
+document.getElementById("btn-w")!.addEventListener("click", () => {
+  playerPos.j--;
+  const center = gridToLatLngBounds(playerPos.i, playerPos.j).getCenter();
+  map.panTo(center);
+  redrawGrid();
+  updateHud();
+});
+
+document.getElementById("btn-e")!.addEventListener("click", () => {
+  playerPos.j++;
+  const center = gridToLatLngBounds(playerPos.i, playerPos.j).getCenter();
+  map.panTo(center);
+  redrawGrid();
+  updateHud();
+});
+
+// Initial setup
+redrawGrid();
+updateHud();

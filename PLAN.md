@@ -45,12 +45,7 @@ Key gameplay challenge: Can players craft an even higher value token by moving t
 
 - [x] Change grid origin from classroom to Null Island (0, 0)
 - [x] Add 4 buttons (N/S/E/W) on screen to move the player by one grid cell
-- [] Player position is tracked as (i, j) — clicking a button updates it
-- [] Only cells near player can be clicked (within 3 cells)
-- [] When map stops moving (`map.on('moveend', ...)`), re-draw all visible cells
-  - To do that:
-  - Use map bounds → figure out which `(i, j)` cells are visible
-  - Clear old cells and re-run `refreshCell(i, j)` for all visible ones
+- [x] Player position is tracked as (i, j) — clicking a button updates it
+- [x] When map stops moving, re-draw all visible cells (did not need moveend)
 - [] Each time a cell is re-drawn, re-roll its token using `luck()`
 - [] Increase win goal from `16` → `256` (update message too)
-- [] Test: pan map far away → new cells appear, player can walk with buttons
