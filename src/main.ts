@@ -15,6 +15,11 @@ mapDiv.style.width = "100vw";
 mapDiv.style.height = "100vh";
 document.body.appendChild(mapDiv);
 
+// Game state
+const cellContents = new Map<string, number>();
+let heldToken: number | null = null;
+const playerPos = { i: 0, j: 0 };
+
 // Start map at Null Island (0, 0)
 const NULL_ISLAND = leaflet.latLng(0, 0);
 const map = leaflet.map(mapDiv, {
@@ -54,11 +59,6 @@ function gridToLatLngBounds(i: number, j: number) {
     [south, east],
   ]);
 }
-
-// Game state
-const cellContents = new Map<string, number>();
-let heldToken: number | null = null;
-const playerPos = { i: 0, j: 0 };
 
 // Players held token (HUD)
 const hud = document.createElement("div");
@@ -158,6 +158,7 @@ function redrawGrid() {
         interactive: true,
       }).addTo(gridLayerGroup);
 
+      // try to interact with tokens
       rect.on("click", () => {
         const distI = Math.abs(i - playerPos.i);
         const distJ = Math.abs(j - playerPos.j);
@@ -198,7 +199,7 @@ function redrawGrid() {
   }
 }
 
-// Button event listeners
+// move north
 document.getElementById("btn-n")!.addEventListener("click", () => {
   playerPos.i++;
   const center = gridToLatLngBounds(playerPos.i, playerPos.j).getCenter();
@@ -207,6 +208,7 @@ document.getElementById("btn-n")!.addEventListener("click", () => {
   updateHud();
 });
 
+// move south
 document.getElementById("btn-s")!.addEventListener("click", () => {
   playerPos.i--;
   const center = gridToLatLngBounds(playerPos.i, playerPos.j).getCenter();
@@ -215,6 +217,7 @@ document.getElementById("btn-s")!.addEventListener("click", () => {
   updateHud();
 });
 
+// move west
 document.getElementById("btn-w")!.addEventListener("click", () => {
   playerPos.j--;
   const center = gridToLatLngBounds(playerPos.i, playerPos.j).getCenter();
@@ -223,6 +226,7 @@ document.getElementById("btn-w")!.addEventListener("click", () => {
   updateHud();
 });
 
+// move east
 document.getElementById("btn-e")!.addEventListener("click", () => {
   playerPos.j++;
   const center = gridToLatLngBounds(playerPos.i, playerPos.j).getCenter();
