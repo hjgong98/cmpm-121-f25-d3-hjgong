@@ -1,5 +1,6 @@
 // @deno-types="npm:@types/leaflet"
 import leaflet from "leaflet";
+const visitedCells = new Set<string>();
 
 // Styles
 import "leaflet/dist/leaflet.css";
@@ -139,7 +140,8 @@ function redrawGrid() {
       const bounds = gridToLatLngBounds(i, j);
       const key = `${i},${j}`;
 
-      if (!cellContents.has(key)) {
+      if (!visitedCells.has(key)) {
+        visitedCells.add(key);
         const spawnRoll = luck(key);
         if (spawnRoll < 0.5) {
           const valueRoll = luck(key + "value");
