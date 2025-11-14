@@ -1,5 +1,6 @@
 // @deno-types="npm:@types/leaflet"
 import leaflet from "leaflet";
+
 // Styles
 import "leaflet/dist/leaflet.css";
 import "./style.css";
@@ -145,7 +146,6 @@ function redrawGrid() {
           const value = valueRoll < 0.7 ? 1 : 2;
           cellContents.set(key, value);
         }
-        // 🌟 It's re-rolled here every time the grid is drawn and cell is empty!
       }
 
       const rect = leaflet.rectangle(bounds, {

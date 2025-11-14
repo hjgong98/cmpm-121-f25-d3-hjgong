@@ -50,3 +50,14 @@ Key gameplay challenge: Can players craft an even higher value token by moving t
 - [x] Each time a cell is re-drawn, re-roll its token using `luck()`
 - [x] fixed the the bug where clicking the N button would make player go down and clicking S would make player go up
 - [x] Increase win goal from `16` → `256` (update message too)
+
+## D3.c: Object persistence
+
+Key technical challenge: Can your software accurately remember the state of map cells even when they scroll off the screen?
+Key gameplay challenge: Can you fix a gameplay bug where players can farm tokens by moving into and out of a region repeatedly to get access to fresh resources?
+
+### D3.c Steps
+
+- [ ] Track visited cells with `visitedCells: Set<string>` to prevent re-rolling tokens
+- [ ] Only store non-empty cells in `cellContents` (Flyweight pattern)
+- [ ] Implement `saveState()` and `loadState()` for future persistence (Memento pattern)
