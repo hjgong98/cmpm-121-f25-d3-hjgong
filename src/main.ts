@@ -235,6 +235,85 @@ document.getElementById("btn-e")!.addEventListener("click", () => {
   updateHud();
 });
 
+// === Save & Load Game State ===
+
+// Define the shape of saved game data
+interface SavedGameState {
+  playerPos: { i: number; j: number };
+  heldToken: number | null;
+  cellContents: Record<string, number>;
+}
+
+// Save current game state
+function saveState(): SavedGameState {
+  return {
+    playerPos: { i: playerPos.i, j: playerPos.j },
+    heldToken,
+    cellContents: Object.fromEntries(cellContents) as Record<string, number>,
+  };
+}
+
+// Load game state from saved data
+function loadState(saved: SavedGameState) {
+  if (!saved) return;
+
+  // Restore player position
+  if (
+    typeof saved.playerPos.i === "number" &&
+    typeof saved.playerPos.j === "number"
+  ) {
+    playerPos.i = saved.playerPos.i;
+    playerPos.j = saved.playerPos.j;
+  }
+
+  // Restore held token
+  if (saved.heldToken === null || typeof saved.heldToken === "number") {
+    heldToken = saved.heldToken;
+  }
+
+  // Restore cell contents
+  if (saved.cellContents && typeof saved.cellContents === "object") {
+    cellContents.clear();
+    Object.entries(saved.cellContents).forEach(([key, value]) => {
+      if (typeof value === "number") {
+        cellContents.set(key, value);
+      }
+    });
+  }
+
+  redrawGrid();
+  updateHud();
+}
+
+// Create Save and Load buttons
+const saveLoadDiv = document.createElement("div");
+saveLoadDiv.innerHTML = `
+  <button id="btn-save" style="font-size:14px;margin:4px;">💾 Save</button>
+  <button id="btn-load" style="font-size:14px;margin:4px;">📂 Load</button>
+`;
+saveLoadDiv.style.position = "fixed";
+saveLoadDiv.style.bottom = "20px";
+saveLoadDiv.style.right = "20px";
+saveLoadDiv.style.zIndex = "1000";
+document.body.appendChild(saveLoadDiv);
+
+// Simple in-memory save (you could later use localStorage)
+let savedGame: SavedGameState | null = null;
+
+document.getElementById("btn-save")!.addEventListener("click", () => {
+  savedGame = saveState();
+  alert("Game saved! 🎮 Got your back, traveler.");
+});
+
+document.getElementById("btn-load")!.addEventListener("click", () => {
+  if (savedGame) {
+    loadState(savedGame);
+    alert("Game loaded! 🔁 Back in action!");
+  } else {
+    alert("No save data found. 😢 Try saving first!");
+  }
+});
+
 // Initial setup
 redrawGrid();
 updateHud();

@@ -60,4 +60,4 @@ Key gameplay challenge: Can you fix a gameplay bug where players can farm tokens
 
 - [x] Track visited cells with `visitedCells: Set<string>` to prevent re-rolling tokens
 - [x] Only store non-empty cells in `cellContents` (Flyweight pattern) -- already had this one done (didnt realize it lol)
-- [ ] Implement `saveState()` and `loadState()` for future persistence (Memento pattern)
+- [x] Implement `saveState()` and `loadState()` for future persistence (Memento pattern)
