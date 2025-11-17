@@ -15,10 +15,88 @@ mapDiv.style.width = "100vw";
 mapDiv.style.height = "100vh";
 document.body.appendChild(mapDiv);
 
+// === Facade Pattern: Movement Controller Interface ===
+interface MovementController {
+  start(): void;
+  stop(): void;
+  getMode(): string;
+}
+
+// === Button Movement Controller (Facade Implementation) ===
+class ButtonMovementController implements MovementController {
+  private isActive: boolean = false;
+
+  start(): void {
+    if (this.isActive) return;
+    this.isActive = true;
+    console.log("Button movement controller started");
+
+    // Attach button event listeners
+    this.attachButtonListeners();
+  }
+
+  stop(): void {
+    if (!this.isActive) return;
+    this.isActive = false;
+    console.log("Button movement controller stopped");
+
+    // Remove button event listeners by cloning elements
+    this.detachButtonListeners();
+  }
+
+  getMode(): string {
+    return "🎮 Buttons";
+  }
+
+  private attachButtonListeners(): void {
+    document.getElementById("btn-n")!.addEventListener("click", this.moveNorth);
+    document.getElementById("btn-s")!.addEventListener("click", this.moveSouth);
+    document.getElementById("btn-w")!.addEventListener("click", this.moveWest);
+    document.getElementById("btn-e")!.addEventListener("click", this.moveEast);
+  }
+
+  private detachButtonListeners(): void {
+    // Clone buttons to remove all event listeners
+    const buttons = ["btn-n", "btn-s", "btn-w", "btn-e"];
+    buttons.forEach((btnId) => {
+      const btn = document.getElementById(btnId)!;
+      btn.replaceWith(btn.cloneNode(true));
+    });
+  }
+
+  private moveNorth = (): void => {
+    playerPos.i++;
+    this.updateGameAfterMove();
+  };
+
+  private moveSouth = (): void => {
+    playerPos.i--;
+    this.updateGameAfterMove();
+  };
+
+  private moveWest = (): void => {
+    playerPos.j--;
+    this.updateGameAfterMove();
+  };
+
+  private moveEast = (): void => {
+    playerPos.j++;
+    this.updateGameAfterMove();
+  };
+
+  private updateGameAfterMove(): void {
+    const center = gridToLatLngBounds(playerPos.i, playerPos.j).getCenter();
+    map.panTo(center);
+    redrawGrid();
+    updateHud();
+  }
+}
+
 // Game state
 const cellContents = new Map<string, number>();
 let heldToken: number | null = null;
 const playerPos = { i: 0, j: 0 };
+let currentMovementController: MovementController | null = null;
 
 // Start map at Null Island (0, 0)
 const NULL_ISLAND = leaflet.latLng(0, 0);
@@ -60,6 +138,39 @@ function gridToLatLngBounds(i: number, j: number) {
   ]);
 }
 
+// Initialize movement control
+function initializeMovementController() {
+  // Check URL parameters first
+  const urlParams = new URLSearchParams(globalThis.location.search);
+  const movementParam = urlParams.get("movement");
+
+  if (movementParam === "geolocation") {
+    switchToGeolocationMovement();
+  } else {
+    switchToButtonMovement();
+  }
+}
+
+function switchToGeolocationMovement() {
+  console.log("Switching to geolocation movement - to be implemented");
+  // For now, fall back to buttons
+  switchToButtonMovement();
+}
+
+function switchToButtonMovement() {
+  console.log("Switching to button movement");
+
+  // Stop current controller if exists
+  if (currentMovementController) {
+    currentMovementController.stop();
+  }
+
+  // Create and start button controller
+  currentMovementController = new ButtonMovementController();
+  currentMovementController.start();
+  updateHud();
+}
+
 // Players held token (HUD)
 const hud = document.createElement("div");
 hud.id = "hud";
@@ -93,9 +204,12 @@ document.body.appendChild(buttonDiv);
 // Update HUD to show position too
 function updateHud() {
   const pos = `(${playerPos.i}, ${playerPos.j})`;
+  const mode = currentMovementController
+    ? currentMovementController.getMode()
+    : "🎮 Buttons";
   hud.textContent = heldToken
-    ? `Holding: ${heldToken} | Pos: ${pos}`
-    : `Holding: — | Pos: ${pos}`;
+    ? `Holding: ${heldToken} | Pos: ${pos} | Mode: ${mode}`
+    : `Holding: — | Pos: ${pos} | Mode: ${mode}`;
 }
 
 // Store markers to refresh
@@ -203,42 +317,6 @@ function redrawGrid() {
   }
 }
 
-// move north
-document.getElementById("btn-n")!.addEventListener("click", () => {
-  playerPos.i++;
-  const center = gridToLatLngBounds(playerPos.i, playerPos.j).getCenter();
-  map.panTo(center);
-  redrawGrid();
-  updateHud();
-});
-
-// move south
-document.getElementById("btn-s")!.addEventListener("click", () => {
-  playerPos.i--;
-  const center = gridToLatLngBounds(playerPos.i, playerPos.j).getCenter();
-  map.panTo(center);
-  redrawGrid();
-  updateHud();
-});
-
-// move west
-document.getElementById("btn-w")!.addEventListener("click", () => {
-  playerPos.j--;
-  const center = gridToLatLngBounds(playerPos.i, playerPos.j).getCenter();
-  map.panTo(center);
-  redrawGrid();
-  updateHud();
-});
-
-// move east
-document.getElementById("btn-e")!.addEventListener("click", () => {
-  playerPos.j++;
-  const center = gridToLatLngBounds(playerPos.i, playerPos.j).getCenter();
-  map.panTo(center);
-  redrawGrid();
-  updateHud();
-});
-
 // === Save & Load Game State ===
 
 // Memento: object that stores saved game state
@@ -302,7 +380,6 @@ saveLoadDiv.style.zIndex = "1000";
 document.body.appendChild(saveLoadDiv);
 
 // Caretaker: manages saved memento
-// not going to do local storage - too much hassle
 let savedGame: SavedGameState | null = null;
 
 document.getElementById("btn-save")!.addEventListener("click", () => {
@@ -319,6 +396,8 @@ document.getElementById("btn-load")!.addEventListener("click", () => {
     alert("No save data found. 😢 Try saving first!");
   }
 });
+
+initializeMovementController();
 
 // Initial setup
 redrawGrid();

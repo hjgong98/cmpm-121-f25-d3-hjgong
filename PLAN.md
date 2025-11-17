@@ -61,3 +61,19 @@ Key gameplay challenge: Can you fix a gameplay bug where players can farm tokens
 - [x] Track visited cells with `visitedCells: Set<string>` to prevent re-rolling tokens
 - [x] Only store non-empty cells in `cellContents` (Flyweight pattern) -- already had this one done (didnt realize it lol)
 - [x] Implement `saveState()` and `loadState()` for future persistence (Memento pattern)
+
+## D3.d: Gameplay across real-world space and time
+
+Key technical challenges: Can your software remember game state even when the page is closed? Is the player character’s in-game movement controlled by the real-world geolocation of their device?
+Key gameplay challenge: Can the user test the game with multiple gameplay sessions, some involving real-world movement and some involving simulated movement?
+
+### D3.d Steps
+
+- [x] Implement MovementController interface (Facade pattern) with start() and stop() methods
+- [] Build GeolocationMovementController using navigator.geolocation.watchPosition and convert lat/lng → grid (i,j) with threshold to prevent jitter
+- [] Reuse existing buttons via ButtonMovementController implementing same interface
+- [] Auto-select controller based on query string (?movement=geolocation) or default to buttons
+- [] Add UI toggle to switch modes and show current mode (e.g., "📍 GPS" or "🎮 Buttons") in HUD
+- [] Save full game state (playerPos, heldToken, cellContents) to localStorage on every change (Memento pattern)
+- [] Load from localStorage on startup; fall back to defaults if empty
+- [] Add "New Game" button that clears localStorage and resets state
