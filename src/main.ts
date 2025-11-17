@@ -101,6 +101,9 @@ function updateHud() {
 // Store markers to refresh
 const cellMarkers = new Map<string, leaflet.Marker>();
 
+// flyweight pattern: cell rendering optimization
+// intrinsic: rendering logic/style is shared across all cells
+// intrinsic: cell position (i,j) and value are pssed in during rendering
 function refreshCell(i: number, j: number) {
   const key = `${i},${j}`;
   const bounds = gridToLatLngBounds(i, j);
@@ -109,6 +112,7 @@ function refreshCell(i: number, j: number) {
   const existingMarker = cellMarkers.get(key);
   if (existingMarker) map.removeLayer(existingMarker);
 
+  // flyweight: shared rendering logic
   const icon = leaflet.divIcon({
     html: `<span style="
       font: 12px monospace;
@@ -237,14 +241,14 @@ document.getElementById("btn-e")!.addEventListener("click", () => {
 
 // === Save & Load Game State ===
 
-// Define the shape of saved game data
+// Memento: object that stores saved game state
 interface SavedGameState {
   playerPos: { i: number; j: number };
   heldToken: number | null;
   cellContents: Record<string, number>;
 }
 
-// Save current game state
+// Originator: creates and restores mementos
 function saveState(): SavedGameState {
   return {
     playerPos: { i: playerPos.i, j: playerPos.j },
@@ -253,7 +257,7 @@ function saveState(): SavedGameState {
   };
 }
 
-// Load game state from saved data
+// Originator: restores state from memento
 function loadState(saved: SavedGameState) {
   if (!saved) return;
 
@@ -297,7 +301,8 @@ saveLoadDiv.style.right = "20px";
 saveLoadDiv.style.zIndex = "1000";
 document.body.appendChild(saveLoadDiv);
 
-// Simple in-memory save (you could later use localStorage)
+// Caretaker: manages saved memento
+// not going to do local storage - too much hassle
 let savedGame: SavedGameState | null = null;
 
 document.getElementById("btn-save")!.addEventListener("click", () => {
@@ -306,6 +311,7 @@ document.getElementById("btn-save")!.addEventListener("click", () => {
 });
 
 document.getElementById("btn-load")!.addEventListener("click", () => {
+  // Caretaker: load memento
   if (savedGame) {
     loadState(savedGame);
     alert("Game loaded! 🔁 Back in action!");
