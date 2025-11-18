@@ -480,8 +480,6 @@ function redrawGrid() {
           }
         }
       });
-
-      refreshCell(i, j);
     }
   }
 }
@@ -572,6 +570,7 @@ function autoSave(): void {
 // Create Save and Load buttons
 const saveLoadDiv = document.createElement("div");
 saveLoadDiv.innerHTML = `
+  <button id="btn-new-game" style="font-size:14px;margin:4px;background:#ff4444;color:white;border:none;padding:8px 12px;border-radius:4px;">🔄 New Game</button>
   <button id="btn-save" style="font-size:14px;margin:4px;">💾 Save</button>
   <button id="btn-load" style="font-size:14px;margin:4px;">📂 Load</button>
 `;
@@ -581,6 +580,43 @@ saveLoadDiv.style.right = "20px";
 saveLoadDiv.style.zIndex = "1000";
 document.body.appendChild(saveLoadDiv);
 
+// New Game function
+function startNewGame(): void {
+  if (!confirm("Start a new game? This will erase all current progress.")) {
+    return;
+  }
+
+  // Reset game state
+  playerPos.i = 0;
+  playerPos.j = 0;
+  heldToken = null;
+  cellContents.clear();
+  visitedCells.clear();
+
+  // Clear localStorage
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (error) {
+    console.error("Failed to clear localStorage:", error);
+  }
+
+  // Reset UI
+  redrawGrid();
+  updateHud();
+
+  const center = gridToLatLngBounds(playerPos.i, playerPos.j).getCenter();
+  map.panTo(center);
+
+  alert("New game started! Fresh adventure begins! 🌟");
+}
+
+// Add the New Game button event listener
+document.getElementById("btn-new-game")!.addEventListener(
+  "click",
+  startNewGame,
+);
+
+// Update the existing save/load button handlers to show appropriate messages
 document.getElementById("btn-save")!.addEventListener("click", () => {
   saveState();
 });
