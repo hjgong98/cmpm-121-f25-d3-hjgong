@@ -89,6 +89,7 @@ class ButtonMovementController implements MovementController {
     map.panTo(center);
     redrawGrid();
     updateHud();
+    autoSave();
   }
 }
 
@@ -212,6 +213,7 @@ class GeolocationMovementController implements MovementController {
     map.panTo(center);
     redrawGrid();
     updateHud();
+    autoSave();
     console.log(`Player moved to: (${playerPos.i}, ${playerPos.j})`);
   }
 }
@@ -456,6 +458,7 @@ function redrawGrid() {
             cellContents.delete(key);
             updateHud();
             refreshCell(i, j);
+            autoSave();
           }
         } else if (cellValue !== undefined) {
           if (heldToken === cellValue) {
@@ -464,6 +467,7 @@ function redrawGrid() {
             cellContents.delete(key);
             updateHud();
             refreshCell(i, j);
+            autoSave();
             if (newValue === 256) {
               alert("Congrats on getting 256 points! 🎉 You win! 🎉");
             }
@@ -472,6 +476,7 @@ function redrawGrid() {
             heldToken = cellValue;
             updateHud();
             refreshCell(i, j);
+            autoSave();
           }
         }
       });
@@ -489,46 +494,79 @@ interface SavedGameState {
   heldToken: number | null;
   cellContents: Record<string, number>;
 }
+// === localStorage Persistence ===
+const STORAGE_KEY = "coinCollectorGameState";
 
-// Originator: creates and restores mementos
-function saveState(): SavedGameState {
-  return {
+// saveState uses localStorage
+function saveState(): void {
+  const gameState: SavedGameState = {
     playerPos: { i: playerPos.i, j: playerPos.j },
     heldToken,
-    cellContents: Object.fromEntries(cellContents) as Record<string, number>,
+    cellContents: Object.fromEntries(cellContents),
   };
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+    console.log("Game state saved to localStorage");
+  } catch (error) {
+    console.error("Failed to save game state:", error);
+    alert("Failed to save game. Storage might be full.");
+  }
 }
 
-// Originator: restores state from memento
-function loadState(saved: SavedGameState) {
-  if (!saved) return;
+// loadState uses localStorage
+function loadState(): void {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) {
+      console.log("No saved game found");
+      return;
+    }
 
-  // Restore player position
-  if (
-    typeof saved.playerPos.i === "number" &&
-    typeof saved.playerPos.j === "number"
-  ) {
-    playerPos.i = saved.playerPos.i;
-    playerPos.j = saved.playerPos.j;
-  }
+    const gameState: SavedGameState = JSON.parse(saved);
 
-  // Restore held token
-  if (saved.heldToken === null || typeof saved.heldToken === "number") {
-    heldToken = saved.heldToken;
-  }
+    // Restore player position
+    if (
+      gameState.playerPos && typeof gameState.playerPos.i === "number" &&
+      typeof gameState.playerPos.j === "number"
+    ) {
+      playerPos.i = gameState.playerPos.i;
+      playerPos.j = gameState.playerPos.j;
+    }
 
-  // Restore cell contents
-  if (saved.cellContents && typeof saved.cellContents === "object") {
+    // Restore held token
+    heldToken = gameState.heldToken;
+
+    // Restore cell contents
     cellContents.clear();
-    Object.entries(saved.cellContents).forEach(([key, value]) => {
-      if (typeof value === "number") {
-        cellContents.set(key, value);
-      }
-    });
-  }
+    if (gameState.cellContents) {
+      Object.entries(gameState.cellContents).forEach(([key, value]) => {
+        if (typeof value === "number") {
+          cellContents.set(key, value);
+        }
+      });
+    }
 
-  redrawGrid();
-  updateHud();
+    // Also restore visited cells for consistency
+    visitedCells.clear();
+    Array.from(cellContents.keys()).forEach((key) => visitedCells.add(key));
+
+    redrawGrid();
+    updateHud();
+
+    const center = gridToLatLngBounds(playerPos.i, playerPos.j).getCenter();
+    map.panTo(center);
+
+    console.log("Game state loaded from localStorage");
+  } catch (error) {
+    console.error("Failed to load game state:", error);
+    alert("Failed to load saved game. Data might be corrupted.");
+  }
+}
+
+// Auto-save function to call after any game state change
+function autoSave(): void {
+  saveState();
 }
 
 // Create Save and Load buttons
@@ -543,26 +581,17 @@ saveLoadDiv.style.right = "20px";
 saveLoadDiv.style.zIndex = "1000";
 document.body.appendChild(saveLoadDiv);
 
-// Caretaker: manages saved memento
-let savedGame: SavedGameState | null = null;
-
 document.getElementById("btn-save")!.addEventListener("click", () => {
-  savedGame = saveState();
-  alert("Game saved! 🎮 Got your back, traveler.");
+  saveState();
 });
 
 document.getElementById("btn-load")!.addEventListener("click", () => {
-  // Caretaker: load memento
-  if (savedGame) {
-    loadState(savedGame);
-    alert("Game loaded! 🔁 Back in action!");
-  } else {
-    alert("No save data found. 😢 Try saving first!");
-  }
+  loadState();
 });
 
 initializeMovementController();
 
 // Initial setup
+loadState();
 redrawGrid();
 updateHud();
