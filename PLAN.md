@@ -70,10 +70,10 @@ Key gameplay challenge: Can the user test the game with multiple gameplay sessio
 ### D3.d Steps
 
 - [x] Implement MovementController interface (Facade pattern) with start() and stop() methods
-- [] Build GeolocationMovementController using navigator.geolocation.watchPosition and convert lat/lng → grid (i,j) with threshold to prevent jitter
-- [] Reuse existing buttons via ButtonMovementController implementing same interface
-- [] Auto-select controller based on query string (?movement=geolocation) or default to buttons
-- [] Add UI toggle to switch modes and show current mode (e.g., "📍 GPS" or "🎮 Buttons") in HUD
+- [x] Build GeolocationMovementController using navigator.geolocation.watchPosition and convert lat/lng → grid (i,j) with threshold to prevent jitter
+- [x] Reuse existing buttons via ButtonMovementController implementing same interface
+- [x] Auto-select controller based on query string (?movement=geolocation) or default to buttons
+- [x] Add UI toggle to switch modes and show current mode (e.g., "📍 GPS" or "🎮 Buttons") in HUD
 - [] Save full game state (playerPos, heldToken, cellContents) to localStorage on every change (Memento pattern)
 - [] Load from localStorage on startup; fall back to defaults if empty
 - [] Add "New Game" button that clears localStorage and resets state

@@ -92,6 +92,130 @@ class ButtonMovementController implements MovementController {
   }
 }
 
+// Geolocation Movement Controller (Facade Implementation)
+class GeolocationMovementController implements MovementController {
+  private isActive: boolean = false;
+  private watchId: number | null = null;
+  private lastGridPos: { i: number; j: number } | null = null;
+  private readonly MOVEMENT_THRESHOLD = 0.00002;
+
+  start(): void {
+    if (this.isActive) return;
+
+    if (!navigator.geolocation) {
+      alert(
+        "Geolocation is not supported by this browser. Falling back to button controls.",
+      );
+      switchToButtonMovement();
+      return;
+    }
+
+    this.isActive = true;
+    console.log("Geolocation movement controller started");
+
+    // Request permission and start watching position
+    this.watchId = navigator.geolocation.watchPosition(
+      this.handlePositionUpdate.bind(this),
+      this.handlePositionError.bind(this),
+      {
+        enableHighAccuracy: true,
+        maximumAge: 30000,
+        timeout: 27000,
+      },
+    );
+  }
+
+  stop(): void {
+    if (!this.isActive) return;
+    this.isActive = false;
+    if (this.watchId !== null) {
+      navigator.geolocation.clearWatch(this.watchId);
+      this.watchId = null;
+    }
+    console.log("Geolocation movement controller stopped");
+    this.lastGridPos = null;
+  }
+
+  getMode(): string {
+    return "📍 GPS";
+  }
+
+  private handlePositionUpdate(position: GeolocationPosition): void {
+    const { latitude, longitude } = position.coords;
+    console.log(`GPS Update: lat=${latitude}, lng=${longitude}`);
+
+    // Convert real-world coordinates to grid coordinates
+    const gridPos = this.latLngToGrid(latitude, longitude);
+
+    // Check if movement exceeds threshold to prevent jitter
+    if (this.shouldUpdatePosition(gridPos)) {
+      this.lastGridPos = gridPos;
+      this.updatePlayerPosition(gridPos);
+    }
+  }
+  private handlePositionError(error: GeolocationPositionError): void {
+    console.error("Geolocation error:", error);
+
+    let errorMessage = "Geolocation error: ";
+    switch (error.code) {
+      case error.PERMISSION_DENIED:
+        errorMessage +=
+          "Location access denied. Falling back to button controls.";
+        break;
+      case error.POSITION_UNAVAILABLE:
+        errorMessage +=
+          "Location information unavailable. Falling back to button controls.";
+        break;
+      case error.TIMEOUT:
+        errorMessage +=
+          "Location request timed out. Falling back to button controls.";
+        break;
+      default:
+        errorMessage += "Unknown error. Falling back to button controls.";
+        break;
+    }
+    alert(errorMessage);
+    switchToButtonMovement();
+  }
+  private latLngToGrid(lat: number, lng: number): { i: number; j: number } {
+    // Convert latitude/longitude to grid coordinates
+    // Null Island (0,0) (origin point)
+    // Each grid cell is TILE_DEGREES (1e-4) in size
+    const i = Math.floor(lat / TILE_DEGREES);
+    const j = Math.floor(lng / TILE_DEGREES);
+    console.log(`Converted: lat=${lat}, lng=${lng} -> grid=(${i}, ${j})`);
+    return { i, j };
+  }
+  private shouldUpdatePosition(newGridPos: { i: number; j: number }): boolean {
+    // If no previous position, always update
+    if (!this.lastGridPos) return true;
+    // Calculate distance from last position
+    const deltaI = Math.abs(newGridPos.i - this.lastGridPos.i);
+    const deltaJ = Math.abs(newGridPos.j - this.lastGridPos.j);
+    // Only update if movement exceeds threshold (prevents jitter)
+    const shouldUpdate = deltaI >= 1 || deltaJ >= 1;
+    if (shouldUpdate) {
+      console.log(
+        `Movement detected: (${this.lastGridPos.i},${this.lastGridPos.j}) -> (${newGridPos.i},${newGridPos.j})`,
+      );
+    }
+    return shouldUpdate;
+  }
+
+  private updatePlayerPosition(gridPos: { i: number; j: number }): void {
+    // Update player position
+    playerPos.i = gridPos.i;
+    playerPos.j = gridPos.j;
+
+    // Update game state
+    const center = gridToLatLngBounds(playerPos.i, playerPos.j).getCenter();
+    map.panTo(center);
+    redrawGrid();
+    updateHud();
+    console.log(`Player moved to: (${playerPos.i}, ${playerPos.j})`);
+  }
+}
+
 // Game state
 const cellContents = new Map<string, number>();
 let heldToken: number | null = null;
@@ -132,6 +256,7 @@ function gridToLatLngBounds(i: number, j: number) {
   const south = north + TILE_DEGREES;
   const west = originLng + j * TILE_DEGREES;
   const east = west + TILE_DEGREES;
+
   return leaflet.latLngBounds([
     [north, west],
     [south, east],
@@ -152,9 +277,16 @@ function initializeMovementController() {
 }
 
 function switchToGeolocationMovement() {
-  console.log("Switching to geolocation movement - to be implemented");
-  // For now, fall back to buttons
-  switchToButtonMovement();
+  console.log("Switching to geolocation movement");
+  // Stop current controller if exists
+  if (currentMovementController) {
+    currentMovementController.stop();
+  }
+
+  // Create and start geolocation controller
+  currentMovementController = new GeolocationMovementController();
+  currentMovementController.start();
+  updateHud();
 }
 
 function switchToButtonMovement() {
@@ -201,15 +333,47 @@ buttonDiv.style.zIndex = "1000";
 buttonDiv.style.textAlign = "center";
 document.body.appendChild(buttonDiv);
 
+// Create movement mode toggle button - MOVED TO TOP RIGHT
+const modeToggleDiv = document.createElement("div");
+modeToggleDiv.innerHTML = `
+  <button id="btn-mode-toggle" style="font-size:14px;margin:4px;background:#4CAF50;color:white;border:none;padding:8px 12px;border-radius:4px;">
+    Switch to GPS
+  </button>
+`;
+
+modeToggleDiv.style.position = "fixed";
+modeToggleDiv.style.top = "20px";
+modeToggleDiv.style.right = "20px";
+modeToggleDiv.style.zIndex = "1000";
+document.body.appendChild(modeToggleDiv);
+
+// Movement mode toggle handler
+document.getElementById("btn-mode-toggle")!.addEventListener("click", () => {
+  const currentMode = currentMovementController?.getMode();
+  if (currentMode === "🎮 Buttons") {
+    switchToGeolocationMovement();
+    (document.getElementById("btn-mode-toggle") as HTMLButtonElement)
+      .textContent = "Switch to Buttons";
+  } else {
+    switchToButtonMovement();
+    (document.getElementById("btn-mode-toggle") as HTMLButtonElement)
+      .textContent = "Switch to GPS";
+  }
+});
+
 // Update HUD to show position too
 function updateHud() {
   const pos = `(${playerPos.i}, ${playerPos.j})`;
   const mode = currentMovementController
     ? currentMovementController.getMode()
-    : "🎮 Buttons";
+    : "Buttons";
+  let status = "";
+  if (mode === "📍 GPS") {
+    status = " | GPS: Active";
+  }
   hud.textContent = heldToken
-    ? `Holding: ${heldToken} | Pos: ${pos} | Mode: ${mode}`
-    : `Holding: — | Pos: ${pos} | Mode: ${mode}`;
+    ? `Holding: ${heldToken} | Pos: ${pos} | Mode: ${mode}${status}`
+    : `Holding: — | Pos: ${pos} | Mode: ${mode}${status}`;
 }
 
 // Store markers to refresh
